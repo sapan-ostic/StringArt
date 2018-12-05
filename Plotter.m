@@ -1,4 +1,4 @@
-classdef plotter
+classdef Plotter
     %UNTITLED Summary of this class goes here
     %   Detailed explanation goes here
     
@@ -76,15 +76,7 @@ classdef plotter
             [N,~] = size(obj.circleXY);
             
             obj.circleXY = obj.circleXY+[xc*ones(N,1),yc*ones(N,1)];
-            
-            % img = ones(3*r,3*r,3);
-            % for i =1:N
-            %     img(circleXY(i,1),circleXY(i,2),1:3) = [0,0,0];
-            % end
-            %     image(img);
-            % % plot(circleXY(:,1),circleXY(:,2));
-            % axis equal
-            % axis tight
+            obj.circleXY = obj.circleXY(1:end-1,:);
         end
     end
 end
