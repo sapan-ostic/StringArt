@@ -6,8 +6,8 @@ classdef World
         workspace;
         Npins; 
         radius;
-        PinsXY;
-        circleXY;
+        pinsInd;
+        circleInd;
         centre;
         cmap;
     end
@@ -18,7 +18,7 @@ classdef World
             if(nargin<4)
                 inputImage_ = imread('beardo.jpg');
                 Npins_ = 20;
-                gridsize_ = 100;
+                gridsize_ = 200;
             end                  
             
             % Setting properties
@@ -30,7 +30,20 @@ classdef World
             
             % Calling methods
             obj = get_ws(obj);
-            obj = get_pins(obj);          
+            obj = get_pins(obj); 
+            
+            figure(3);
+            subplot(1,2,1);
+            image(obj.inputImage);
+            title('Original Image');
+            truesize([400 400]);
+            axis equal
+                        
+            subplot(1,2,2);
+            image(obj.workspace);
+            title('Formed Image');
+%             grid on;
+            axis equal
         end
         
         %% Get Workspace
@@ -39,64 +52,44 @@ classdef World
             img = obj.inputImage;
             img = imresize(img,[obj.gridsize NaN]); % resizing to gridsize
             img = im2bw(img,0.5);
+            img = imcomplement(img);
             obj.inputImage = img;
             
             % set up color map for display
-            % 0 - white - clear cell
-            % 1 - black - obstacle
-            % 2 - red = visited
+            % 1 - white - clear cell
+            % 2 - black - obstacle
+            % 3 - red = visited
             
-            obj.cmap = [0.0000 0.0000 0.0000;...
-                    1.0000 1.0000 1.0000; ...
-                    0.8500 0.3250 0.0980];
-                
+            obj.cmap = [1.0000 1.0000 1.0000;...
+                        0.0000 0.0000 0.0000;...    
+                        0.8500 0.3250 0.0980];
+            
             colormap(obj.cmap);
-            figure(3);
-            subplot(1,2,1);
-            image(img);
-            truesize([400 400]); 
-            
-            
+                       
             obj.workspace = ones(obj.gridsize,obj.gridsize);
             plot_obj = Plotter;
             plot_obj = plot_obj.circle(obj.centre,obj.centre,obj.radius);
-            obj.circleXY = plot_obj.circleXY; 
-            [N,~] = size(obj.circleXY);
-            
-            for i =1:N
-                obj.workspace(obj.circleXY(i,1),obj.circleXY(i,2)) = 0;
-            end
-
-            subplot(1,2,2);
-            image(obj.workspace);
-            grid on;
-            axis equal
+            circleXY = plot_obj.circleXY; % XY coordinates of circle
+            obj.circleInd = sub2ind(size(obj.workspace),circleXY(:,1),circleXY(:,2));
+            obj.workspace(obj.circleInd) = 2;
         end
         
         %% Get Pins
         function obj = get_pins(obj)
-            [N,~] = size(obj.circleXY);
-            Pins = ceil(1:N/obj.Npins:N);  
-            obj.PinsXY = [obj.circleXY(Pins,1),obj.circleXY(Pins,2)];
-            
-            
+            [N,~] = size(obj.circleInd);
+            Pins_index = ceil(1:N/obj.Npins:N);  
+            obj.pinsInd = obj.circleInd(Pins_index);         
+            [PinsX,PinsY] = ind2sub(size(obj.workspace),obj.pinsInd);
             for i = 1:obj.Npins
-%                obj.PinsXY(i,1) = obj.centre + round(obj.radius*cos(2*pi*i/obj.Npins));
-%                obj.PinsXY(i,2) = obj.centre + round(obj.radius*sin(2*pi*i/obj.Npins));
-               obj.workspace = insertShape(obj.workspace,'FilledCircle',[obj.PinsXY(i,1) obj.PinsXY(i,2) 2],...
-                'Color',obj.cmap(3,:),'SmoothEdges',false);
-            
-           end 
-           
-%            plot_obj = plotter;
-%            plotXY = plot_obj.line([obj.PinsXY(1,1:2)],[obj.PinsXY(5,1:2)]);
-%            lineXY = plotXY.lineXY;
-%            [N,~] = size(lineXY);
-%            for i = 1:N
-%                obj.workspace(lineXY(i,1),lineXY(i,2),1:3) = zeros(1,3);
-%            end
-           image(obj.workspace);
-        end
+                plot_obj = Plotter;
+                plot_obj = plot_obj.circle(PinsX(i,1),PinsY(i,1),2);
+                circleXY = plot_obj.circleXY; % XY coordinates of circle
+                obj.circleInd = sub2ind(size(obj.workspace),circleXY(:,1),circleXY(:,2));
+                obj.workspace(obj.circleInd) = 3;
+          
+            end
+             
+       end
         
     end
 end
